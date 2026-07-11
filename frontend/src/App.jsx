@@ -1,121 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 
-function App() {
-  const [count, setCount] = useState(0)
+import Login from './pages/Login';
 
+// Student pages
+import StudentDashboard from './pages/student/StudentDashboard';
+import ProposalForm from './pages/student/ProposalForm';
+import Documents from './pages/student/Documents';
+
+// Advisor pages
+import AdvisorDashboard from './pages/advisor/AdvisorDashboard';
+import GradingForm from './pages/advisor/GradingForm';
+
+// Admin pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageUsers from './pages/admin/ManageUsers';
+import ProposalReview from './pages/admin/ProposalReview';
+import GroupsOverview from './pages/admin/GroupsOverview'; // FIX: was missing entirely
+import SelectSupervisor from './pages/student/SelectSupervisor';
+
+function Layout({ children }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main>{children}</main>
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster position="top-right" />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* ── Student routes ── */}
+          <Route path="/student" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><StudentDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/proposal" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><ProposalForm /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/documents" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><Documents /></Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* ── Advisor routes ── */}
+          <Route path="/advisor" element={
+            <ProtectedRoute allowedRoles={['advisor']}>
+              <Layout><AdvisorDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/advisor/grade/:groupId" element={
+            <ProtectedRoute allowedRoles={['advisor']}>
+              <Layout><GradingForm /></Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* ── Admin routes ── */}
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><AdminDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/groups" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><GroupsOverview /></Layout>   {/* FIX: route was missing */}
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/proposals" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><ProposalReview /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Layout><ManageUsers /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/student/select-supervisor" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <Layout><SelectSupervisor /></Layout>
+            </ProtectedRoute>
+} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
