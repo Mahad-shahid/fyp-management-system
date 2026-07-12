@@ -4,16 +4,28 @@ import os
 
 load_dotenv()
 
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-    MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-)
+MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+MAIL_FROM = os.getenv("MAIL_FROM")
+MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
+MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+
+# Only configure mail if all required env vars are present
+# This prevents the app from crashing on startup when mail is not configured
+if MAIL_USERNAME and MAIL_PASSWORD and MAIL_FROM:
+    conf = ConnectionConfig(
+        MAIL_USERNAME=MAIL_USERNAME,
+        MAIL_PASSWORD=MAIL_PASSWORD,
+        MAIL_FROM=MAIL_FROM,
+        MAIL_PORT=MAIL_PORT,
+        MAIL_SERVER=MAIL_SERVER,
+        MAIL_STARTTLS=True,
+        MAIL_SSL_TLS=False,
+        USE_CREDENTIALS=True,
+    )
+else:
+    conf = None
+
 
 async def send_deadline_reminder(
     recipient_email: str,
@@ -22,6 +34,11 @@ async def send_deadline_reminder(
     days_left: int,
     due_date: str
 ):
+    # Silently skip if mail is not configured
+    if conf is None:
+        print(f"[EMAIL SKIPPED] Mail not configured. Would have sent to {recipient_email}: {deadline_title}")
+        return
+
     html_body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #7B1D1D; padding: 24px; border-radius: 8px 8px 0 0;">
