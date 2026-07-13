@@ -59,6 +59,21 @@ export default function AdvisorDashboard() {
     }
   };
 
+  const handleDownload = async (docId, fileName) => {
+  try {
+    const response = await API.get(`/documents/download/${docId}`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch {
+    toast.error('Failed to download file');
+  }
+};
   const handleRespond = async (requestId, status) => {
     setResponding(requestId);
     try {
@@ -286,20 +301,47 @@ export default function AdvisorDashboard() {
                   </div>
                   <div style={{ padding: '14px 16px' }}>
                     <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 10px' }}>
-                      Documents ({groupDocs.length})
+                      Documents for Review ({groupDocs.length})
                     </p>
                     {groupDocs.length === 0 ? (
-                      <p style={{ fontSize: '12px', color: 'var(--text-light)' }}>No documents yet</p>
+                      <p style={{ fontSize: '12px', color: 'var(--text-light)' }}>No documents uploaded yet</p>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {groupDocs.map(doc => (
-                          <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                            <p style={{ fontSize: '12px', color: 'var(--text-mid)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                              {doc.file_name}
-                            </p>
-                            <span className="badge" style={docTypeColors[doc.doc_type] || { background: '#F1F5F9', color: '#475569' }}>
-                              {doc.doc_type}
-                            </span>
+                          <div key={doc.id} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+                            padding: '6px 8px', background: 'var(--white)', borderRadius: '6px', border: '1px solid var(--border)',
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+                              <span style={{ fontSize: '12px', flexShrink: 0 }}>📄</span>
+                              <div style={{ minWidth: 0 }}>
+                                <p style={{
+                                  fontSize: '11px', color: 'var(--text-dark)', margin: 0, fontWeight: 500,
+                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                }}>
+                                  {doc.file_name}
+                                </p>
+                                <p style={{ fontSize: '10px', color: 'var(--text-light)', margin: 0 }}>
+                                  {new Date(doc.uploaded_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                              <span className="badge" style={docTypeColors[doc.doc_type] || { background: '#F1F5F9', color: '#475569' }}>
+                                {doc.doc_type}
+                              </span>
+                              <button
+                                onClick={() => handleDownload(doc.id, doc.file_name)}
+                                style={{
+                                  background: 'var(--off-white)', border: '1px solid var(--border)',
+                                  borderRadius: '5px', padding: '2px 8px', fontSize: '11px',
+                                  cursor: 'pointer', color: 'var(--text-mid)',
+                                }}
+                                title="View / Download"
+                              >
+                                ↓
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
